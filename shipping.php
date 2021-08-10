@@ -5,7 +5,7 @@
  * Plugin uri      : http://sikido.vn
  * Description     : Plugin tính phí vận chuyển theo quận huyện
  * Author          : SKDSoftware Dev Team
- * Version         : 2.0.1
+ * Version         : 2.0.2
  */
 define('SHIP_NAME', 'shipping');
 
@@ -15,7 +15,7 @@ define('SHIP_PATH', Path::plugin(SHIP_FOLDER));
 
 define('SHIP_KEY', 'zone');
 
-define('SHIP_VERSION', '2.0.1');
+define('SHIP_VERSION', '2.0.2');
 
 class shipping {
 
