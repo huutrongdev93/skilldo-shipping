@@ -5,17 +5,17 @@
  * Plugin uri      : http://sikido.vn
  * Description     : Plugin tính phí vận chuyển theo quận huyện
  * Author          : SKDSoftware Dev Team
- * Version         : 2.0.2
+ * Version         : 2.1.0
  */
-define('SHIP_NAME', 'shipping');
+const SHIP_NAME = 'shipping';
 
-define('SHIP_FOLDER', 'shipping');
+const SHIP_FOLDER = 'shipping';
+
+const SHIP_KEY = 'zone';
+
+const SHIP_VERSION = '2.1.0';
 
 define('SHIP_PATH', Path::plugin(SHIP_FOLDER));
-
-define('SHIP_KEY', 'zone');
-
-define('SHIP_VERSION', '2.0.2');
 
 class shipping {
 
@@ -25,13 +25,13 @@ class shipping {
 
     static public function config($result) {
 
-        $shipping_key = InputBuilder::post('shipping_key');
+        $shipping_key = Request::post('shipping_key');
 
-        $zone_id = (int)InputBuilder::post('zone_id');
+        $zone_id = (int)Request::post('zone_id');
 
         if (empty($zone_id)) {
 
-            $data = InputBuilder::post();
+            $data = Request::post();
 
             $shipping = option::get('cart_shipping', []);
 
@@ -41,9 +41,9 @@ class shipping {
 
             $shipping[$shipping_key]['range_price'] = (!empty($data['range_price'])) ? Str::clear($data['range_price']) : false;
 
-            $shipping[$shipping_key]['title'] = InputBuilder::post('title');
+            $shipping[$shipping_key]['title'] = Request::post('title');
 
-            $shipping[$shipping_key]['img'] = FileHandler::handlingUrl(InputBuilder::post('img'));
+            $shipping[$shipping_key]['img'] = FileHandler::handlingUrl(Request::post('img'));
 
             $shipping[$shipping_key]['price_default'] = Str::clear($data['price_default']);
 
@@ -57,30 +57,29 @@ class shipping {
 
             if (have_posts($zone)) {
 
-                $model = get_model()->settable('wcmc_shipping_zones');
+                $model = model('shipping_zones');
 
                 $data = [];
 
-                $data['zone_name'] = InputBuilder::post('zone_name');
+                $data['zone_name'] = Request::post('zone_name');
 
-                $data['zone_type'] = InputBuilder::post('zone_type');
+                $data['zone_type'] = Request::post('zone_type');
 
-                $data['zone_price'] = (int)InputBuilder::post('zone_price');
+                $data['zone_price'] = (int)Request::post('zone_price');
 
-                $data['range_zone_price'] = (!empty(InputBuilder::post('range_zone_price'))) ? serialize(InputBuilder::post('range_zone_price')) : false;
+                $data['range_zone_price'] = (!empty(Request::post('range_zone_price'))) ? serialize(Request::post('range_zone_price')) : false;
 
+                if ($model->update($data, Qr::set($zone_id))) {
 
-                if ($model->update_where($data, ['id' => $zone_id])) {
+                    $locations = Request::post('zone_locations');
 
-                    $locations = InputBuilder::post('zone_locations');
-
-                    $model->settable('wcmc_shipping_zone_locations');
+                    $model->settable('shipping_zone_locations');
 
                     foreach ($zone->locations as $location) {
 
                         if (in_array($location->location_type, $locations) === false) {
 
-                            $model->delete_where(array('zone_id' => $zone_id, 'location_type' => $location->location_type));
+                            $model->delete(Qr::set('zone_id', $zone_id)->where('location_type', $location->location_type));
 
                         } else unset($locations[array_search($location->location_type, $locations)]);
 
@@ -97,92 +96,48 @@ class shipping {
                             $zone_location['location_type'] = $value;
 
                             $model->add($zone_location);
-
                         }
-
                     }
-
                 }
-
             }
         }
-
         return $result;
     }
 
     static public function getZone($args = []) {
-
-        $model = get_model()->settable('wcmc_shipping_zones');
-
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
-
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        $zone = $model->get_where($where, $params);
-
+        if (is_numeric($args)) $args = Qr::set($args);
+        if(is_array($args)) $args = Qr::convert($args);
+        $zone = model('shipping_zones')->get($args);
         if (have_posts($zone)) {
-
-            $zone->locations = static::getsZoneLocations(['where' => array('zone_id' => $zone->id)]);
+            $zone->locations = static::getsZoneLocations(Qr::set('zone_id', $zone->id));
         }
-
         return $zone;
     }
 
     static public function getsZoneLocations($args = []) {
-
-        $model = get_model()->settable('wcmc_shipping_zone_locations');
-
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
-
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        return $model->gets_where($where, $params);
-
+        if (is_numeric($args)) $args = Qr::set($args);
+        if(is_array($args)) $args = Qr::convert($args);
+        return model('shipping_zone_locations')->gets($args);
     }
 
     static public function listService($package, $order) {
 
         if (!empty($order->other_delivery_address)) {
-
             $citi = $order->shipping_city;
-
             $districts = $order->shipping_districts;
 
         } else {
-
             $citi = $order->billing_city;
-
             $districts = $order->billing_districts;
-
         }
 
-
         $item[0] = ['label' => $package['label']];
-
         $item[0]['expected_delivery_time'] = 'N/A';
-
         $item[0]['fee'] = Shipping::calculate([
-
             'billing_city' => $citi,
-
             'billing_districts' => $districts,
-
         ]);
-
         return $item;
-
     }
 
     static public function calculate($package) {
@@ -206,7 +161,7 @@ class shipping {
 
         $zone = [];
 
-        $citi_location = static::getZoneLocations(['where' => array('location_type' => $city)]);
+        $citi_location = static::getZoneLocations(Qr::set('location_type', $city));
 
         if (have_posts($citi_location)) {
 
@@ -252,7 +207,7 @@ class shipping {
 
                     $district = [];
 
-                    $district_location = static::getsDistrictsLocations(['where' => ['locations_type' => $city, 'locations_code' => $districts]]);
+                    $district_location = static::getsDistrictsLocations(Qr::set('location_type', $city)->where('location_code', $districts));
 
                     if (have_posts($district_location)) {
                         if (!empty($shipping['range_price']) && $shipping['range_price'] == 'range_price') {
@@ -287,42 +242,24 @@ class shipping {
 
     static public function getZoneLocations($args = []) {
 
-        $model = get_model()->settable('wcmc_shipping_zone_locations');
+        if (is_numeric($args)) $args = Qr::set($args);
 
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
+        if (is_array($args)) $args = Qr::convert($args);
 
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        return $model->get_where($where, $params);
+        return model('shipping_zone_locations')->get($args);
     }
 
     static public function getsZone($args = []) {
 
-        $model = get_model()->settable('wcmc_shipping_zones');
+        if (is_numeric($args)) $args = Qr::set($args);
 
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
+        if (is_array($args)) $args = Qr::convert($args);
 
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        $zone = $model->gets_where($where, $params);
+        $zone = model('shipping_zones')->gets($args);
 
         if (have_posts($zone)) {
-
             foreach ($zone as $key => $value) {
-
-                $zone[$key]->locations = static::getsZoneLocations(['where' => array('zone_id' => $value->id)]);
+                $zone[$key]->locations = static::getsZoneLocations(Qr::set('zone_id', $value->id));
             }
         }
 
@@ -330,43 +267,18 @@ class shipping {
     }
 
     static public function getsDistrictsLocations($args = []) {
-
-        $model = get_model()->settable('wcmc_shipping_districts_locations');
-
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
-
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        return $model->gets_where($where, $params);
+        if (is_numeric($args)) $args = Qr::set($args);
+        if (is_array($args)) $args = Qr::convert($args);
+        return model('shipping_districts_locations')->gets($args);
     }
 
     static public function getDistricts($args = []) {
-
-        $model = get_model()->settable('wcmc_shipping_districts');
-
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
-
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        $zone = $model->get_where($where, $params);
-
+        if (is_numeric($args)) $args = Qr::set($args);
+        if (is_array($args)) $args = Qr::convert($args);
+        $zone = model('shipping_districts')->get($args);
         if (have_posts($zone)) {
-
-            $zone->locations = static::getsDistrictsLocations(array('where' => array('districts_id' => $zone->id)));
+            $zone->locations = static::getsDistrictsLocations(Qr::set('districts_id', $zone->id));
         }
-
         return $zone;
     }
 
@@ -410,105 +322,81 @@ class shipping {
     }
 
     static public function getsDistricts($args = []) {
-
-        $model = get_model()->settable('wcmc_shipping_districts');
-
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
-
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        $zone = $model->gets_where($where, $params);
-
+        if (is_numeric($args)) $args = Qr::set($args);
+        if (is_array($args)) $args = Qr::convert($args);
+        $zone = model('shipping_districts')->gets($args);
         if (have_posts($zone)) {
-
             foreach ($zone as $key => $value) {
-
-                $zone[$key]->locations = static::getsDistrictsLocations(array('where' => array('districts_id' => $value->id)));
+                $zone[$key]->locations = static::getsDistrictsLocations(Qr::set('districts_id', $value->id));
             }
         }
-
         return $zone;
     }
 
     static public function getDistrictsLocations($args = []) {
-
-        $model = get_model()->settable('wcmc_shipping_districts_locations');
-
-        if (is_numeric($args)) $args = ['where' => ['id' => (int)$args]];
-
-        if (!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args);
-
-        $where = $args['where'];
-
-        $params = $args['params'];
-
-        return $model->get_where($where, $params);
+        if (is_numeric($args)) $args = Qr::set($args);
+        if (is_array($args)) $args = Qr::convert($args);
+        return model('shipping_districts_locations')->gets($args);
     }
 
     public function active() {
-
-        $model = get_model('plugins');
-        /**
-         * ADD OPTION CẤU HÌNH MẶC ĐỊNH
-         */
-        $model->query("CREATE TABLE IF NOT EXISTS `cle_wcmc_shipping_zones` (
-            `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `zone_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-            `order` int(11) NOT NULL DEFAULT '0',
-            `public` int(11) NOT NULL DEFAULT '1',
-            `created` datetime DEFAULT NULL,
-            `updated` datetime DEFAULT NULL,
-            `zone_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-            `zone_price` int(11) NOT NULL DEFAULT '0',
-            `range_zone_price` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
-        ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-        $model->query("CREATE TABLE IF NOT EXISTS `cle_wcmc_shipping_zone_locations` (
-            `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `zone_id` int(11) NOT NULL,
-            `location_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-            `location_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-            `order` int(11) NOT NULL DEFAULT '0',
-            `created` datetime DEFAULT NULL,
-            `updated` datetime DEFAULT NULL
-        ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-        $model->query("CREATE TABLE IF NOT EXISTS `cle_wcmc_shipping_districts` (
-            `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `zone_id` int(11) NOT NULL DEFAULT '0',
-            `districts_price_min` int(11) NOT NULL DEFAULT '0',
-            `districts_price_max` int(11) NOT NULL DEFAULT '0',
-            `districts_price` int(11) NOT NULL DEFAULT '0',
-            `order` int(11) NOT NULL DEFAULT '0',
-            `created` datetime DEFAULT NULL,
-            `updated` datetime DEFAULT NULL
-        ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-        $model->query("CREATE TABLE IF NOT EXISTS `cle_wcmc_shipping_districts_locations` (
-            `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `districts_id` int(11) NOT NULL DEFAULT '0',
-            `locations_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-            `locations_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-            `order` int(11) NOT NULL DEFAULT '0',
-            `created` datetime DEFAULT NULL,
-            `updated` datetime DEFAULT NULL
-        ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $model = model();
+        if(!$model::schema()->hasTable('shipping_zones')) {
+            $model::schema()->create('shipping_zones', function ($table) {
+                $table->increments('id');
+                $table->string('zone_name', 255)->collate('utf8mb4_unicode_ci')->nullable();
+                $table->string('zone_type', 200)->collate('utf8mb4_unicode_ci');
+                $table->integer('zone_price')->default(0);
+                $table->string('range_zone_price', 200)->collate('utf8mb4_unicode_ci')->nullable();
+                $table->tinyInteger('public')->default(1);
+                $table->integer('order')->default(0);
+                $table->dateTime('created');
+                $table->dateTime('updated')->nullable();
+            });
+        }
+        if(!$model::schema()->hasTable('shipping_zone_locations')) {
+            $model::schema()->create('shipping_zone_locations', function ($table) {
+                $table->increments('id');
+                $table->integer('zone_id')->default(0);
+                $table->string('location_code', 255)->collate('utf8mb4_unicode_ci')->nullable();
+                $table->string('location_type', 200)->collate('utf8mb4_unicode_ci');
+                $table->integer('order')->default(0);
+                $table->dateTime('created');
+                $table->dateTime('updated')->nullable();
+            });
+        }
+        if(!$model::schema()->hasTable('shipping_districts')) {
+            $model::schema()->create('shipping_districts', function ($table) {
+                $table->increments('id');
+                $table->integer('zone_id')->default(0);
+                $table->integer('districts_price_min')->default(0);
+                $table->integer('districts_price_max')->default(0);
+                $table->integer('districts_price')->default(0);
+                $table->integer('order')->default(0);
+                $table->dateTime('created');
+                $table->dateTime('updated')->nullable();
+            });
+        }
+        if(!$model::schema()->hasTable('shipping_districts_locations')) {
+            $model::schema()->create('shipping_districts_locations', function ($table) {
+                $table->increments('id');
+                $table->integer('districts_id')->default(0);
+                $table->string('location_code', 255)->collate('utf8mb4_unicode_ci')->nullable();
+                $table->string('location_type', 200)->collate('utf8mb4_unicode_ci');
+                $table->integer('order')->default(0);
+                $table->dateTime('created');
+                $table->dateTime('updated')->nullable();
+            });
+        }
+        Option::update('shipping_version', SHIP_VERSION);
     }
 
     public function uninstall() {
-        $model = get_model('plugins');
-        $model->query("DROP TABLE IF EXISTS `cle_wcmc_shipping_zones`");
-        $model->query("DROP TABLE IF EXISTS `cle_wcmc_shipping_zone_locations`");
-        $model->query("DROP TABLE IF EXISTS `cle_wcmc_shipping_districts`");
-        $model->query("DROP TABLE IF EXISTS `cle_wcmc_shipping_districts_locations`");
+        $model = model();
+        $model::schema()->drop('shipping_zones');
+        $model::schema()->drop('shipping_zone_locations');
+        $model::schema()->drop('shipping_districts');
+        $model::schema()->drop('shipping_districts_locations');
     }
 }
 

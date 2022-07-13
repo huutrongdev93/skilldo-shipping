@@ -15,7 +15,7 @@ if(!function_exists('register_shipping')) {
 
 if(!function_exists('admin_shipping_setting')) {
 	function admin_shipping_setting($key_shipping, $shipping) {
-		$zone_id = (int)InputBuilder::get('zone_id');
+		$zone_id = (int)Request::get('zone_id');
 		if(!empty($zone_id)) {
 		    include ('admin/views/html-shipping-detail.php');
 		}
