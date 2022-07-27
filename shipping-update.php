@@ -24,7 +24,7 @@ Class Shipping_Update_Version {
         Option::update('shipping_version', SHIP_VERSION );
     }
     public function update_Version_2_0_0($model) {
-        //Shipping_Update_Database::Version_2_0_0($model);
+        Shipping_Update_Database::Version_2_0_0($model);
     }
     public function update_Version_2_1_0($model) {
         Shipping_Update_Database::Version_2_1_0($model);
@@ -45,7 +45,7 @@ Class Shipping_Update_Database {
             $model::schema()->rename('wcmc_shipping_zones', 'shipping_zones');
         }
         if($model::schema()->hasTable('wcmc_shipping_zone_locations')) {
-            $model::schema()->rename('wcmc_shipping_zone_locations', 'shipping_zone_locations');
+            $model::schema()->rename('wcmc_shipping_zone_locations', 'shipping_zones_locations');
         }
         if($model::schema()->hasTable('wcmc_shipping_districts')) {
             $model::schema()->rename('wcmc_shipping_districts', 'shipping_districts');

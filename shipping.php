@@ -19,7 +19,7 @@ define('SHIP_PATH', Path::plugin(SHIP_FOLDER));
 
 class shipping {
 
-    private $name = 'shipping';
+    private string $name = 'shipping';
 
     function __construct() {}
 
@@ -53,7 +53,7 @@ class shipping {
             }
         } else {
 
-            $zone = shipping::getZone($zone_id);
+            $zone = ShippingZones::get($zone_id);
 
             if (have_posts($zone)) {
 
@@ -104,23 +104,7 @@ class shipping {
         return $result;
     }
 
-    static public function getZone($args = []) {
-        if (is_numeric($args)) $args = Qr::set($args);
-        if(is_array($args)) $args = Qr::convert($args);
-        $zone = model('shipping_zones')->get($args);
-        if (have_posts($zone)) {
-            $zone->locations = static::getsZoneLocations(Qr::set('zone_id', $zone->id));
-        }
-        return $zone;
-    }
-
-    static public function getsZoneLocations($args = []) {
-        if (is_numeric($args)) $args = Qr::set($args);
-        if(is_array($args)) $args = Qr::convert($args);
-        return model('shipping_zone_locations')->gets($args);
-    }
-
-    static public function listService($package, $order) {
+    static public function listService($package, $order): array {
 
         if (!empty($order->other_delivery_address)) {
             $citi = $order->shipping_city;
@@ -161,13 +145,13 @@ class shipping {
 
         $zone = [];
 
-        $citi_location = static::getZoneLocations(Qr::set('location_type', $city));
+        $citi_location = ShippingZonesLocation::get(Qr::set('location_type', $city));
 
         if (have_posts($citi_location)) {
 
-            $zone = static::getZone($citi_location->zone_id);
+            $zone = ShippingZones::get($citi_location->zone_id);
         } else {
-            $zones = static::getsZone();
+            $zones = ShippingZones::gets();
 
             foreach ($zones as $value) {
 
@@ -207,12 +191,12 @@ class shipping {
 
                     $district = [];
 
-                    $district_location = static::getsDistrictsLocations(Qr::set('location_type', $city)->where('location_code', $districts));
+                    $district_location = ShippingDistrictsLocation::gets(Qr::set('location_type', $city)->where('location_code', $districts));
 
                     if (have_posts($district_location)) {
                         if (!empty($shipping['range_price']) && $shipping['range_price'] == 'range_price') {
                             foreach ($district_location as $item) {
-                                $district = static::getDistricts($item->districts_id);
+                                $district = ShippingDistricts::get($item->districts_id);
                                 if ($district->districts_price_min <= $total && ($district->districts_price_max >= $total || $district->districts_price_max == 0)) {
                                     return $district->districts_price;
                                 }
@@ -226,7 +210,7 @@ class shipping {
 
                         } else {
 
-                            $district = static::getDistricts($district_location[0]->districts_id);
+                            $district = ShippingDistricts::get($district_location[0]->districts_id);
 
                             if(have_posts($district)) return $district->districts_price;
                         }
@@ -238,48 +222,6 @@ class shipping {
         }
 
         return false;
-    }
-
-    static public function getZoneLocations($args = []) {
-
-        if (is_numeric($args)) $args = Qr::set($args);
-
-        if (is_array($args)) $args = Qr::convert($args);
-
-        return model('shipping_zone_locations')->get($args);
-    }
-
-    static public function getsZone($args = []) {
-
-        if (is_numeric($args)) $args = Qr::set($args);
-
-        if (is_array($args)) $args = Qr::convert($args);
-
-        $zone = model('shipping_zones')->gets($args);
-
-        if (have_posts($zone)) {
-            foreach ($zone as $key => $value) {
-                $zone[$key]->locations = static::getsZoneLocations(Qr::set('zone_id', $value->id));
-            }
-        }
-
-        return $zone;
-    }
-
-    static public function getsDistrictsLocations($args = []) {
-        if (is_numeric($args)) $args = Qr::set($args);
-        if (is_array($args)) $args = Qr::convert($args);
-        return model('shipping_districts_locations')->gets($args);
-    }
-
-    static public function getDistricts($args = []) {
-        if (is_numeric($args)) $args = Qr::set($args);
-        if (is_array($args)) $args = Qr::convert($args);
-        $zone = model('shipping_districts')->get($args);
-        if (have_posts($zone)) {
-            $zone->locations = static::getsDistrictsLocations(Qr::set('districts_id', $zone->id));
-        }
-        return $zone;
     }
 
     static public function change($package, $order) {
@@ -308,37 +250,6 @@ class shipping {
         return true;
     }
 
-    static public function getZoneType($id = '') {
-
-        $zone_type = [
-            'zone_type_free' => 'Giao hàng miễn phí',
-            'zone_type_flat' => 'Đồng giá',
-            'zone_type_district' => 'Tính phí theo quận huyện'
-        ];
-
-        if (!empty($id) && !empty($zone_type[$id])) return apply_filters('shipping_zone_type_label', $zone_type[$id], $id);
-
-        return $zone_type;
-    }
-
-    static public function getsDistricts($args = []) {
-        if (is_numeric($args)) $args = Qr::set($args);
-        if (is_array($args)) $args = Qr::convert($args);
-        $zone = model('shipping_districts')->gets($args);
-        if (have_posts($zone)) {
-            foreach ($zone as $key => $value) {
-                $zone[$key]->locations = static::getsDistrictsLocations(Qr::set('districts_id', $value->id));
-            }
-        }
-        return $zone;
-    }
-
-    static public function getDistrictsLocations($args = []) {
-        if (is_numeric($args)) $args = Qr::set($args);
-        if (is_array($args)) $args = Qr::convert($args);
-        return model('shipping_districts_locations')->gets($args);
-    }
-
     public function active() {
         $model = model();
         if(!$model::schema()->hasTable('shipping_zones')) {
@@ -354,8 +265,8 @@ class shipping {
                 $table->dateTime('updated')->nullable();
             });
         }
-        if(!$model::schema()->hasTable('shipping_zone_locations')) {
-            $model::schema()->create('shipping_zone_locations', function ($table) {
+        if(!$model::schema()->hasTable('shipping_zones_locations')) {
+            $model::schema()->create('shipping_zones_locations', function ($table) {
                 $table->increments('id');
                 $table->integer('zone_id')->default(0);
                 $table->string('location_code', 255)->collate('utf8mb4_unicode_ci')->nullable();
@@ -391,10 +302,10 @@ class shipping {
         Option::update('shipping_version', SHIP_VERSION);
     }
 
-    public function uninstall() {
+    public function uninstall(): void {
         $model = model();
         $model::schema()->drop('shipping_zones');
-        $model::schema()->drop('shipping_zone_locations');
+        $model::schema()->drop('shipping_zones_locations');
         $model::schema()->drop('shipping_districts');
         $model::schema()->drop('shipping_districts_locations');
     }
@@ -403,4 +314,5 @@ class shipping {
 
 include_once 'shipping-admin.php';
 include_once 'shipping-ajax.php';
+include_once 'shipping-function.php';
 include_once 'shipping-update.php';
