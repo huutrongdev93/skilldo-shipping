@@ -33,7 +33,7 @@ class Shipping {
                 $table->text('range')->nullable();
                 $table->integer('fee')->default(0);
                 $table->tinyInteger('default')->default(0);
-                $table->dateTime('created');
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP');
                 $table->dateTime('updated')->nullable();
             });
         }
@@ -46,7 +46,7 @@ class Shipping {
                 $table->string('city', 200)->collate('utf8mb4_unicode_ci');
                 $table->text('districts')->collate('utf8mb4_unicode_ci')->nullable();
                 $table->tinyInteger('districtOption')->default(1);
-                $table->dateTime('created');
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP');
                 $table->dateTime('updated')->nullable();
             });
         }

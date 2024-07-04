@@ -16,7 +16,7 @@ add_action('admin_init', 'Shipping_update_core');
 Class Shipping_Update_Version {
     public function runUpdate($shippingVersion): void
     {
-        $listVersion    = ['2.0.0', '2.1.0', '3.0.0'];
+        $listVersion    = ['2.0.0', '2.1.0', '3.0.0', '3.1.0'];
         $model          = model();
         foreach ($listVersion as $version ) {
             if(version_compare( $version, $shippingVersion ) == 1) {
@@ -33,6 +33,14 @@ Class Shipping_Update_Version {
     public function update_Version_2_1_0($model): void
     {
         Shipping_Update_Database::Version_2_1_0($model);
+    }
+    public function update_Version_3_0_0($model): void
+    {
+        Shipping_Update_Database::Version_3_0_0($model);
+    }
+    public function update_Version_3_1_0($model): void
+    {
+        Shipping_Update_Database::Version_3_1_0($model);
     }
 }
 Class Shipping_Update_Database {
@@ -65,7 +73,6 @@ Class Shipping_Update_Database {
             schema()->rename('wcmc_shipping_districts_locations', 'shipping_districts_locations');
         }
     }
-
     public static function Version_3_0_0($model): void
     {
         if(!schema()->hasTable('shipping_fee')) {
@@ -76,7 +83,7 @@ Class Shipping_Update_Database {
                 $table->text('range')->nullable();
                 $table->integer('fee')->default(0);
                 $table->tinyInteger('default')->default(0);
-                $table->dateTime('created');
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP');
                 $table->dateTime('updated')->nullable();
             });
         }
@@ -93,5 +100,18 @@ Class Shipping_Update_Database {
         schema()->drop('shipping_zones_locations');
         schema()->drop('shipping_districts');
         schema()->drop('shipping_districts_locations');
+    }
+    public static function Version_3_1_0($model): void
+    {
+        if(!schema()->hasTable('shipping_fee')) {
+            schema()->create('shipping_fee', function ($table) {
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP')->change();
+            });
+        }
+        if(!schema()->hasTable('shipping_zones')) {
+            schema()->create('shipping_zones', function ($table) {
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP')->change();
+            });
+        }
     }
 }
