@@ -1,5 +1,8 @@
 <?php
 if(!Admin::is()) return;
+
+use Illuminate\Database\Capsule\Manager as DB;
+
 function Shipping_update_core(): void
 {
     if(Admin::is() && Auth::check() ) {
@@ -83,7 +86,7 @@ Class Shipping_Update_Database {
                 $table->text('range')->nullable();
                 $table->integer('fee')->default(0);
                 $table->tinyInteger('default')->default(0);
-                $table->dateTime('created')->default('CURRENT_TIMESTAMP');
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
             });
         }
