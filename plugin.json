@@ -1,0 +1,8 @@
+{
+    "name":"Shipping",
+    "class":"shipping",
+    "url":"https://sikido.vn",
+    "description":"Plugin tính phí vận chuyển theo quận huyện",
+    "author":"SKDSoftware Dev Team",
+    "version":"3.1.0"
+}

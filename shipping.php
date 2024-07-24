@@ -1,12 +1,4 @@
 <?php
-/**
- * Plugin name     : Shipping
- * Plugin class    : shipping
- * Plugin uri      : http://sikido.vn
- * Description     : Plugin tính phí vận chuyển theo quận huyện
- * Author          : SKDSoftware Dev Team
- * Version         : 3.1.0
- */
 const SHIP_NAME = 'shipping';
 
 const SHIP_FOLDER = 'shipping';
