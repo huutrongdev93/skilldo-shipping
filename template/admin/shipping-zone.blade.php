@@ -53,8 +53,8 @@
 					</div>
 
 					<div class="form-group mb-3">
-						<label class="d-block">
-							<input type="checkbox" name="zoneDistrictOption" class="js_shipping_zone_checkbox_district_option" value="1" checked> Áp dụng với tất cả quận huyện
+						<label class="d-block form-check">
+							<input type="checkbox" name="zoneDistrictOption" class="js_shipping_zone_checkbox_district_option form-check-input" value="1" checked> Áp dụng với tất cả quận huyện
 						</label>
 					</div>
 

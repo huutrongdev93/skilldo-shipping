@@ -5,7 +5,7 @@ const SHIP_FOLDER = 'shipping';
 
 const SHIP_KEY = 'zone';
 
-const SHIP_VERSION = '3.1.0';
+const SHIP_VERSION = '3.2.0';
 
 define('SHIP_PATH', Path::plugin(SHIP_FOLDER));
 
@@ -75,6 +75,8 @@ include_once 'shipping-admin.php';
 include_once 'shipping-ajax.php';
 
 include_once 'shipping-checkout.php';
+
+include_once 'shipping-update.php';
 
 add_filter('shipping_gateways', 'ShippingZoneHandler::register', 1);
 

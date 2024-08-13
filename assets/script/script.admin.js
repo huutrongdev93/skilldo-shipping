@@ -101,7 +101,7 @@ class ShippingHandle {
 
 			self.feeLoading.hide();
 
-			if(response.status == 'success') {
+			if(response.status === 'success') {
 				self.feeList.fees = response.data;
 				self.renderFee();
 				self.feeTable.show();
@@ -121,9 +121,9 @@ class ShippingHandle {
 			self.feeTableBody.append(items.map(function(item) {
 				item.typeLabel = '';
 				item.defaultLabel = '';
-				if(item.type == 'price') item.typeLabel = 'Dựa trên giá trị đơn hàng';
-				if(item.type == 'weight') item.typeLabel = 'Dựa trên khối lượng đơn hàng';
-				if(item.default == 1) {
+				if(item.type === 'price') item.typeLabel = 'Dựa trên giá trị đơn hàng';
+				if(item.type === 'weight') item.typeLabel = 'Dựa trên khối lượng đơn hàng';
+				if(item.default === 1) {
 					item.defaultLabel = '<i class="fa-duotone fa-circle-check"></i>';
 				}
 				return $('#shipping_fee_template').html().split(/\$\{(.+?)\}/g).map(render(item)).join('');
@@ -133,7 +133,7 @@ class ShippingHandle {
 	setFeeModal(status) {
 		this.feeModal.find('#js_shipping_modal_title').html(this.feeModalTitle)
 		this.feeModal.find('.js_shipping_fee_input_name').val(this.feeName)
-		if(this.feeDefault == 1) {
+		if(this.feeDefault === 1) {
 			this.feeModal.find('.js_shipping_fee_checkbox_default').prop('checked', true);
 		}
 		else {
@@ -141,8 +141,8 @@ class ShippingHandle {
 		}
 		this.feeModal.find('.js_shipping_fee_select_type').val(this.feeType)
 		this.feeModal.find('.js_shipping_fee_modal_btn_confirm').attr('data-status', status)
-		if(this.feeType == 'weight') this.feeUnit = 'gram';
-		if(this.feeType == 'price') this.feeUnit = 'đ';
+		if(this.feeType === 'weight') this.feeUnit = 'gram';
+		if(this.feeType === 'price') this.feeUnit = 'đ';
 	}
 	clickAddFee(element) {
 		this.fee = null;
@@ -291,8 +291,6 @@ class ShippingHandle {
 			this.editFee(element)
 		}
 	}
-
-
 	loadZone(element) {
 
 		let self = this;
@@ -324,7 +322,7 @@ class ShippingHandle {
 			let items = [items_tmp];
 			self.zoneTableBody.append(items.map(function(item) {
 				item.districtLabel = '';
-				if(item.districtOption == 1) {
+				if(item.districtOption === 1) {
 					item.districtLabel = 'Tất cả quận huyện';
 				}
 				else {
@@ -341,13 +339,13 @@ class ShippingHandle {
 	}
 	loadLocation(element) {
 		let self = this;
-		if(typeof this.cities == 'undefined' || this.cities == null || this.cities == 'undefined') {
+		if(typeof this.cities == 'undefined' || this.cities == null || this.cities === 'undefined' || this.cities === undefined) {
 
 			let data = {
 				action: 'ShippingAdminAjax::locations',
 			};
 
-			$.post(ajax, data, function () {}, 'json').done(function (response) {
+			request.post(ajax, data).then(function (response) {
 				if (response.status === 'success') {
 					localStorage.setItem('cityList', JSON.stringify(response.data.cities));
 					localStorage.setItem('districtList', JSON.stringify(response.data.districts));
@@ -368,14 +366,11 @@ class ShippingHandle {
 		let self = this;
 		let cityRender = '<option value="all">Tất cả tỉnh thành</option>';
 		if(Object.keys(self.cities).length !== 0) {
-			for (const [value, label] of Object.entries(self.cities)) {
-				if(self.city.value == value) {
-					cityRender += `<option value="${value}" selected>${label}</option>`;
+			for (const [index, item] of Object.entries(self.cities)) {
+				if(item.active === true) {
+					let selected = (self.city.value == item.id) ? ' selected="selected"' : '';
+					cityRender += `<option value="${item.id}" ${selected}>${item.full_name}</option>`;
 				}
-				else {
-					cityRender += `<option value="${value}">${label}</option>`;
-				}
-
 			}
 			self.zoneModal.find('.js_shipping_zone_select_city').html(cityRender);
 		}
@@ -456,12 +451,18 @@ class ShippingHandle {
 			let districtOptions = [];
 			self.districtOptions = '';
 			if(Object.keys(self.districts).length !== 0) {
-				for (const [cityKey, districtTemp] of Object.entries(self.districts)) {
-					if(cityKey == self.zone.city) {
+
+				for (const [index, province] of Object.entries(self.districts)) {
+					if(province.id == self.zone.city) {
 						districtOptions = [];
-						for (const [value, label] of Object.entries(districtTemp)) {
-							districtOptions.push({value, label})
-							self.districtOptions += `<option value="${value}">${label}</option>`;
+						for (const [index, item] of Object.entries(province.districts)) {
+							if(item.active === true) {
+								districtOptions.push({
+									value: item.id,
+									label: item.name
+								})
+								self.districtOptions += `<option value="${item.id}">${item.name}</option>`;
+							}
 						}
 						break;
 					}
@@ -477,27 +478,25 @@ class ShippingHandle {
 				this.zoneDistrictTable.html('');
 
 				for (const [key, disItem] of Object.entries(this.zone.districts)) {
+
 					disItem.feeOptions = '';
+
 					if(Object.keys(self.feeList.fees).length !== 0) {
 						for (const [index, item] of Object.entries(self.feeList.fees)) {
-							if(disItem.fee == item.id) {
-								disItem.feeOptions += `<option value="${item.id}" selected>${item.name}</option>`;
-							}
-							else {
-								disItem.feeOptions += `<option value="${item.id}">${item.name}</option>`;
-							}
+
+							let selected = (disItem.fee == item.id) ? 'selected' : '';
+
+							disItem.feeOptions += `<option value="${item.id}" ${selected}>${item.name}</option>`;
 						}
 					}
 
 					disItem.districtOptions = '';
+
 					if(Object.keys(districtOptions).length !== 0) {
+
 						for (const [index, district] of Object.entries(districtOptions)) {
-							if(disItem.districts.includes(district.value)) {
-								disItem.districtOptions += `<option value="${district.value}" selected>${district.label}</option>`;
-							}
-							else {
-								disItem.districtOptions += `<option value="${district.value}">${district.label}</option>`;
-							}
+							let selected = (disItem.districts.includes(district.value+'')) ? 'selected' : '';
+							disItem.districtOptions += `<option value="${district.value}" ${selected}>${district.label}</option>`;
 						}
 					}
 
@@ -521,7 +520,7 @@ class ShippingHandle {
 
 		self.districtOptions  = '';
 
-		if(cityValue == 'all') {
+		if(cityValue === 'all') {
 			this.city.value = 'all';
 			this.city.label = 'Tất cả tỉnh thành';
 		}
@@ -529,13 +528,19 @@ class ShippingHandle {
 			this.city.value = cityValue;
 			this.city.label = this.cities[cityValue];
 			let districtOptions;
+
 			if(Object.keys(self.districts).length !== 0) {
 
-				for (const [cityKey, districtTemp] of Object.entries(self.districts)) {
-					if(cityKey == cityValue) {
+				for (const [index, province] of Object.entries(self.districts)) {
+					if(province.id == cityValue) {
 						districtOptions = [];
-						for (const [value, label] of Object.entries(districtTemp)) {
-							districtOptions.push({value, label})
+						for (const [index, item] of Object.entries(province.districts)) {
+							if(item.active === true) {
+								districtOptions.push({
+									value: item.id,
+									label: item.name
+								})
+							}
 						}
 						break;
 					}

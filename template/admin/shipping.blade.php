@@ -48,8 +48,8 @@
 						<input name="feeName" class="form-control js_shipping_fee_input_name"/>
 					</div>
 					<div class="form-group">
-						<label class="d-block">
-							<input type="checkbox" name="feeDefault" class="js_shipping_fee_checkbox_default" value="1"> Phí vận chuyển mặc định
+						<label class="d-block form-check">
+							<input type="checkbox" name="feeDefault" class="js_shipping_fee_checkbox_default form-check-input" value="1"> Phí vận chuyển mặc định
 						</label>
 						<p><i style="font-style: italic">Nếu chọn, khi đơn hàng không xác định được phí vận chuyển sẽ sử dụng phí vận chuyển này</i></p>
 					</div>

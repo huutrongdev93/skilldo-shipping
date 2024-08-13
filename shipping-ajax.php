@@ -9,9 +9,9 @@ class ShippingAdminAjax {
     static function locations(): void
     {
         $data = [
-            'cities'            =>  Cart_Location::cities(),
-            'districts'         =>  Cart_Location::districts(),
-            'wards'             =>  Cart_Location::ward(),
+            'cities'            =>  Skilldo\Location::provinces(),
+            'districts'         =>  Skilldo\Location::districts(),
+            'wards'             =>  Skilldo\Location::wards(),
         ];
 
         response()->success(trans('ajax.load.success'), $data);
@@ -284,10 +284,14 @@ class ShippingZoneAdminAjax {
             $zone['city'] = trim((string)$request->input('zoneCity'));
 
             if($zone['city'] != 'all') {
-                $name = Cart_Location::cities($zone['city']);
-                if(empty($name) || have_posts($name)) {
+
+                $name = \Skilldo\Location::provinces($zone['city']);
+
+                if(empty($name) || empty($name->fullname)) {
                     response()->error(trans('Tỉnh thành bạn chọn không tồn tại'));
                 }
+
+                $name = $name->fullname;
             }
             else {
                 $name = 'Tất cả Tỉnh/Thành phố';
@@ -329,8 +333,14 @@ class ShippingZoneAdminAjax {
                     }
 
                     foreach ($item['districts'] as $district) {
+
                         if(in_array($district, $districts) !== false) {
-                            response()->error(trans(Cart_Location::districts($zone['city'], $district).' đang bị trùng lập'));
+
+                            $district = \Skilldo\Location::districts($zone['city'], $district);
+
+                            $district = (!empty($district->fullname)) ? $district->fullname : '';
+
+                            response()->error(trans($district.' đang bị trùng lập'));
                         }
                     }
 
@@ -416,12 +426,14 @@ class ShippingZoneAdminAjax {
                     }
 
                     foreach ($item['districts'] as $district) {
-                        $districtName = Cart_Location::districts($zoneOld->city, $district);
-                        if(empty($districtName) || have_posts($districtName)) {
+
+                        $districtName = \Skilldo\Location::districts($zoneOld->city, $district);
+
+                        if(empty($districtName) || empty($districtName->fullname)) {
                             response()->error(trans('Quận huyện bạn chọn không đúng'));
                         }
                         if(in_array($district, $districts) !== false) {
-                            response()->error(trans($districtName.' đang bị trùng lập'));
+                            response()->error(trans($districtName->fullname.' đang bị trùng lập'));
                         }
                     }
 

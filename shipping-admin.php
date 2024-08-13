@@ -2,7 +2,7 @@
 Class ShippingAdmin {
     static function setting($keyShipping, $shipping): void
     {
-        $cities = Cart_Location::cities();
+        $cities = Skilldo\Location::provincesOptions();
 
         Plugin::view('shipping', 'admin/shipping', [
             'cities' => $cities
