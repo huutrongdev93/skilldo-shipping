@@ -42,7 +42,7 @@ class ShippingFeeAjax
 
         if(!hasItems($range))
         {
-            response()->error(trans('error.shipping.range'));
+            response()->error(trans('shipping::error.shipping.range'));
         }
 
         foreach ($range as $key => $item) {
@@ -55,11 +55,14 @@ class ShippingFeeAjax
 
             $item['unit'] = ($fee['type'] == 'weight') ? Prd::weightUnit() : Prd::priceUnit();
 
-            $item['fee'] = Str::price($item['fee']);
+            $feeRaw = trim((string)($item['fee'] ?? ''));
 
-            if(empty($item['fee']))
+            $item['fee'] = Str::price($feeRaw);
+
+            //0đ là hợp lệ (miễn phí vận chuyển), chỉ chặn khi bỏ trống
+            if($feeRaw === '')
             {
-                response()->error(trans('error.shipping.range.price', [
+                response()->error(trans('shipping::error.shipping.range.price', [
                     'min' => $item['min'],
                     'max' => $item['max']
                 ]));
@@ -96,7 +99,7 @@ class ShippingFeeAjax
         $feeOld = ShippingFee::get($id);
 
         if(!hasItems($feeOld)) {
-            response()->error(trans('error.shipping.notfound'));
+            response()->error(trans('shipping::error.shipping.notfound'));
         }
 
         $validate = $request->validate([
@@ -121,7 +124,7 @@ class ShippingFeeAjax
         $range = $request->input('range');
 
         if(!hasItems($range)) {
-            response()->error(trans('error.shipping.range'));
+            response()->error(trans('shipping::error.shipping.range'));
         }
 
         foreach ($range as $key => $item)
@@ -134,10 +137,13 @@ class ShippingFeeAjax
 
             $item['unit'] = ($fee['type'] == 'weight') ? Prd::weightUnit() : Prd::priceUnit();
 
-            $item['fee'] = Str::price($item['fee']);
+            $feeRaw = trim((string)($item['fee'] ?? ''));
 
-            if(empty($item['fee'])) {
-                response()->error(trans('error.shipping.range.price', [
+            $item['fee'] = Str::price($feeRaw);
+
+            //0đ là hợp lệ (miễn phí vận chuyển), chỉ chặn khi bỏ trống
+            if($feeRaw === '') {
+                response()->error(trans('shipping::error.shipping.range.price', [
                     'min' => $item['min'],
                     'max' => $item['max']
                 ]));
@@ -183,7 +189,7 @@ class ShippingFeeAjax
             {
                 if($zone->feeId == $id)
                 {
-                    response()->error(trans('error.shipping.zone.use', ['name' => $zone->name]));
+                    response()->error(trans('shipping::error.shipping.zone.use', ['name' => $zone->name]));
                 }
                 if($zone->wardOption == 0)
                 {
@@ -191,7 +197,7 @@ class ShippingFeeAjax
                     {
                         if($ward['fee'] == $id)
                         {
-                            response()->error(trans('error.shipping.zone.use.price', ['name' => $zone->name]));
+                            response()->error(trans('shipping::error.shipping.zone.use.price', ['name' => $zone->name]));
                         }
                     }
                 }
@@ -202,12 +208,12 @@ class ShippingFeeAjax
 
         if(!hasItems($fee))
         {
-            response()->error(trans('error.shipping.notfound'));
+            response()->error(trans('shipping::error.shipping.notfound'));
         }
 
         if($fee->default == 1)
         {
-            response()->error(trans('error.shipping.default'));
+            response()->error(trans('shipping::error.shipping.default'));
         }
 
         ShippingFee::whereKey($id)->delete();

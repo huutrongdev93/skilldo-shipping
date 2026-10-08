@@ -160,7 +160,7 @@ class ShippingHandle {
 
 		let self = this;
 
-		let items = [{ id: SkilldoUtil.uniqId(), min: 0, max: 0, fee: 0 , unit: self.unit }];
+		let items = [{ id: SkilldoUtil.uniqId(), min: 0, max: 0, fee: 0 , unit: self.feeUnit ?? 'đ' }];
 
 		this.feeRangeTable.append(items.map(function(item) {
 			return $('#shipping_range_template').html().split(/\$\{(.+?)\}/g).map(render(item)).join('');
@@ -326,10 +326,10 @@ class ShippingHandle {
 			self.zoneTableBody.append(items.map(function(item) {
 				item.wardLabel = '';
 				if(item.wardOption === 1) {
-					item.wardLabel = 'Tất cả quận huyện';
+					item.wardLabel = 'Tất cả phường xã';
 				}
 				else {
-					item.wardLabel = 'Quận huyện tùy chọn';
+					item.wardLabel = 'Phường xã tùy chọn';
 				}
 
 				let fee = self.feeList.get(item.feeId);

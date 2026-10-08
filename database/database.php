@@ -31,8 +31,16 @@ return new class extends Migration
                 $table->integer('city')->default(0);
                 $table->integer('ward')->default(0);
                 $table->tinyInteger('wardOption')->default(1);
+                $table->text('wards')->nullable();
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
+            });
+        }
+        else if(!schema()->hasColumn('shipping_zones', 'wards'))
+        {
+            //Bản cũ không tạo cột wards (danh sách phường xã theo từng mức phí)
+            schema()->table('shipping_zones', function (Blueprint $table) {
+                $table->text('wards')->nullable()->after('wardOption');
             });
         }
     }

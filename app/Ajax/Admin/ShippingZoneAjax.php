@@ -96,7 +96,7 @@ class ShippingZoneAjax
 
                 if(!isset($item['wards']) || !hasItems($item['wards']))
                 {
-                    response()->error(trans('Không được để trống giá trị quận huyện'));
+                    response()->error(trans('Không được để trống giá trị phường xã'));
                 }
 
                 foreach ($item['wards'] as $ward)
@@ -180,7 +180,7 @@ class ShippingZoneAjax
 
             if(!hasItems($zoneWards))
             {
-                response()->error(trans('Bạn chưa chọn quận huyện cho khu vực'));
+                response()->error(trans('Bạn chưa chọn phường xã cho khu vực'));
             }
 
             $wards = [];
@@ -191,7 +191,7 @@ class ShippingZoneAjax
 
                 if(!isset($item['wards']) || !hasItems($item['wards']))
                 {
-                    response()->error(trans('Không được để trống giá trị quận huyện'));
+                    response()->error(trans('Không được để trống giá trị phường xã'));
                 }
 
                 foreach ($item['wards'] as $ward) {
@@ -200,7 +200,7 @@ class ShippingZoneAjax
 
                     if(empty($wardName) || empty($wardName->fullname))
                     {
-                        response()->error(trans('Quận huyện bạn chọn không đúng'));
+                        response()->error(trans('Phường xã bạn chọn không đúng'));
                     }
 
                     if(in_array($ward, $wards) !== false)
@@ -213,7 +213,7 @@ class ShippingZoneAjax
 
                 if(!isset($item['fee']))
                 {
-                    response()->error(trans('Bạn chưa chọn phí vận chuyển cho quận huyện'));
+                    response()->error(trans('Bạn chưa chọn phí vận chuyển cho phường xã'));
                 }
 
                 $zoneWards[$key] = $item;

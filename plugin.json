@@ -5,7 +5,7 @@
     "description":"Plugin tính phí vận chuyển theo quận huyện",
     "author":"SKDSoftware Dev Team",
     "thumb" : "assets/thumb.png",
-    "version":"4.0.0",
+    "version":"4.0.1",
     "providers": [
         "\\Shipping\\Providers\\ShippingServiceProvider"
     ],

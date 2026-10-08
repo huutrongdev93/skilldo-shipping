@@ -20,7 +20,7 @@
 			        <thead>
 			        <tr>
 				        <th class="manage-column">Khu vực</th>
-				        <th class="manage-column">Quận huyện</th>
+				        <th class="manage-column">Phường xã</th>
 				        <th class="manage-column">Vận chuyển</th>
 				        <th class="manage-column">#</th>
 			        </tr>
@@ -49,12 +49,12 @@
 					<div class="form-group mb-3">
 						<label for="">Phí vận chuyển mặc định</label>
 						<select name="zoneFee" class="form-control js_shipping_zone_select_fee"></select>
-						<p><i style="font-style: italic">Khi quận huyện thuộc khu vực này không được chọn phí vận chuyển sẽ áp dụng phí vận chuyển này</i></p>
+						<p><i style="font-style: italic">Khi phường xã thuộc khu vực này không được chọn phí vận chuyển sẽ áp dụng phí vận chuyển này</i></p>
 					</div>
 
 					<div class="form-group mb-3">
 						<label class="d-block form-check">
-							<input type="checkbox" name="zoneDistrictOption" class="js_shipping_zone_checkbox_ward_option form-check-input" value="1" checked> Áp dụng với tất cả quận huyện
+							<input type="checkbox" name="zoneWardOption" class="js_shipping_zone_checkbox_ward_option form-check-input" value="1" checked> Áp dụng với tất cả phường xã
 						</label>
 					</div>
 
@@ -62,14 +62,14 @@
 						<table class="display table table-striped media-table ">
 							<thead>
 							<tr>
-								<th class="manage-column">Quận huyện</th>
+								<th class="manage-column">Phường xã</th>
 								<th class="manage-column">Phí vận chuyển</th>
 								<th class="manage-column">#</th>
 							</tr>
 							</thead>
 							<tbody id="js_shipping_zone_ward_result"></tbody>
 						</table>
-						<button class="btn btn-blue mt-3" id="js_shipping_zone_ward_btn_add" type="button"><?php echo Admin::icon('add');?> Thêm quận huyện</button>
+						<button class="btn btn-blue mt-3" id="js_shipping_zone_ward_btn_add" type="button"><?php echo Admin::icon('add');?> Thêm phường xã</button>
 					</div>
 				</div>
 			</div>

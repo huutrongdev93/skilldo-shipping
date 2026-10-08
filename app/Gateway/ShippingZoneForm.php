@@ -36,6 +36,6 @@ trait ShippingZoneForm
 
     public function saveConfig(Request $request)
     {
-
+        return parent::saveConfig($request);
     }
 }
