@@ -8,8 +8,6 @@ const SHIP_FOLDER = 'shipping';
 
 const SHIP_KEY = 'zone';
 
-const SHIP_VERSION = '3.2.0';
-
 class Shipping {
 
     private string $name = 'shipping';

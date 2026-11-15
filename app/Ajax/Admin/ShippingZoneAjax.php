@@ -101,17 +101,22 @@ class ShippingZoneAjax
 
                 foreach ($item['wards'] as $ward)
                 {
+                    // Phường xã phải thuộc tỉnh của khu vực (trước đây chỉ có save kiểm); khu vực "all" không có phường riêng
+                    $wardInfo = ($zone['city'] != 'all') ? Location2::wards($zone['city'], $ward) : null;
+
+                    if(empty($wardInfo) || empty($wardInfo->fullname))
+                    {
+                        response()->error(trans('Phường xã bạn chọn không đúng'));
+                    }
+
+                    // So với cả các phường đã gặp TRONG cùng nhóm lẫn nhóm trước
                     if(in_array($ward, $wards) !== false)
                     {
-                        $ward = Location2::wards($zone['city'], $ward);
-
-                        $ward = (!empty($ward->fullname)) ? $ward->fullname : '';
-
-                        response()->error(trans($ward.' đang bị trùng lập'));
+                        response()->error(trans($wardInfo->fullname.' đang bị trùng lập'));
                     }
-                }
 
-                $wards = array_merge($wards, $item['wards']);
+                    $wards[] = $ward;
+                }
 
                 if(!isset($item['fee']))
                 {
@@ -203,13 +208,14 @@ class ShippingZoneAjax
                         response()->error(trans('Phường xã bạn chọn không đúng'));
                     }
 
+                    // So với cả các phường đã gặp TRONG cùng nhóm lẫn nhóm trước
                     if(in_array($ward, $wards) !== false)
                     {
                         response()->error(trans($wardName->fullname.' đang bị trùng lập'));
                     }
-                }
 
-                $wards = array_merge($wards, $item['wards']);
+                    $wards[] = $ward;
+                }
 
                 if(!isset($item['fee']))
                 {

@@ -21,47 +21,59 @@ class GetFeeRequest extends AbstractRequest
     {
         $fee = false;
 
+        $shipFee = null;
+
+        $feeId = 0;
+
+        // Ưu tiên khu vực đúng tỉnh, không có thì lùi về khu vực "all" (Tất cả Tỉnh/Thành phố)
+        $zone = null;
+
         if (!empty($data['city']))
         {
-            $feeId = 0;
-
             $zone = ShippingZone::where('city', $data['city'])->first();
+        }
 
-            if(hasItems($zone))
+        if(!hasItems($zone))
+        {
+            $zone = ShippingZone::where('city', 'all')->first();
+        }
+
+        if(hasItems($zone))
+        {
+            if($zone->wardOption == 1)
             {
-                if($zone->wardOption == 1)
-                {
-                    $feeId = $zone->feeId;
-                }
-                else
-                {
-                    if (!empty($data['ward']))
-                    {
-                        foreach ($zone->wards as $item)
-                        {
-                            if(in_array($data['ward'], $item['wards']) !== false)
-                            {
-                                $feeId = $item['fee'];
-                                break;
-                            }
-                        }
-                    }
-
-                    if(empty($feeId))
-                    {
-                        $feeId = $zone->feeId;
-                    }
-                }
-            }
-
-            if(!empty($feeId))
-            {
-                $shipFee = ShippingFee::find($feeId);
+                $feeId = $zone->feeId;
             }
             else
             {
-                $shipFee = ShippingFee::where('default', 1)->first();
+                if (!empty($data['ward']))
+                {
+                    foreach ($zone->wards as $item)
+                    {
+                        if(in_array($data['ward'], $item['wards']) !== false)
+                        {
+                            $feeId = $item['fee'];
+                            break;
+                        }
+                    }
+                }
+
+                if(empty($feeId))
+                {
+                    $feeId = $zone->feeId;
+                }
             }
+        }
+
+        if(!empty($feeId))
+        {
+            $shipFee = ShippingFee::find($feeId);
+        }
+
+        // Không có khu vực nào khớp (kể cả thiếu tỉnh): dùng bảng phí mặc định
+        if(empty($shipFee))
+        {
+            $shipFee = ShippingFee::where('default', 1)->first();
         }
 
         if(!empty($shipFee))
