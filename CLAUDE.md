@@ -6,7 +6,7 @@
 
 **Shipping** - cổng vận chuyển "Giao hàng tận nơi" (`zone`) cho sicommerce: tính phí ship theo bảng phí (theo giá trị đơn hoặc theo cân nặng) gắn với khu vực (tỉnh/thành, tuỳ chọn riêng từng phường/xã).
 
-- Namespace `Shipping\*`; alias `Shipping` trong `plugin.json`. Main class `shipping` (chữ thường) ở `shipping.php`. `plugin.json` version **4.0.2** (đã bỏ hằng `SHIP_VERSION` vì không ai đọc).
+- Namespace `Shipping\*`; alias `Shipping` trong `plugin.json`. Main class `shipping` (chữ thường) ở `shipping.php`. `plugin.json` version **4.1.0** (đã bỏ hằng `SHIP_VERSION` vì không ai đọc).
 - Lưu ý PSR-4: `plugin.json` khai `"Shipping\\Gateway": "app\\Gateway"` (không có dấu `\` cuối, chỉ phủ lớp Gateway); các lớp còn lại (`Ajax`, `Models`, `Providers`, `Services`) do cơ chế quét thư mục `app/` của plugin nạp.
 - Provider `ShippingServiceProvider::boot()` gọi `ShippingManager::addGateway('zone', ['shipping' => ShippingZone::class, 'gateway' => ShippingZoneGateway::class])`.
 - Plugin có repo git riêng (`plugins/shipping/.git`), root repo bỏ qua `plugins/`.
@@ -32,7 +32,7 @@
 | `bootstrap/config.php` | Hook `admin_assets`; hook `admin_init` chạy lại `up()` một lần khi `shipping_db_version` khác `4.0.1` (thay cho migration cập nhật) |
 | `bootstrap/ajax.php` | `Ajax::admin` cho `ShippingAjax::locations`, `ShippingFeeAjax::{load,add,save,delete}`, `ShippingZoneAjax::{load,add,save,delete}` |
 | `app/Gateway/ShippingZone.php` + `ShippingZoneForm.php` | Mô tả cổng (tên `zone`) và form cấu hình: nhúng 3 view admin (bảng phí, khu vực, script) vào trang cấu hình vận chuyển |
-| `app/Gateway/ShippingZoneGateway.php` | `getFee()` dựng `GetFeeRequest` từ tổng tiền/cân nặng giỏ và city/ward |
+| `app/Gateway/ShippingZoneGateway.php` | `getFee()` dựng `GetFeeRequest`: tiền = `subtotal - discountAmount` (lùi về `total`), cân = `shippingWeight.weight` (lùi về `weight` / `Scart::totalWeight()`), city/ward; getter/setter `freeShipAmount` |
 | `app/Gateway/Message/GetFeeRequest.php` | Logic tính phí (xem luồng); `GetFeeResponse` luôn `isSuccessful() = true`, `getFee()` trả `false` nếu không tìm được |
 | `app/Models/ShippingFee.php`, `ShippingZone.php` | Model; `retrieved` tự `unserialize` `range` / `wards` |
 | `app/Ajax/Admin/*` | CRUD bảng phí và khu vực |
@@ -42,7 +42,7 @@
 
 ## Luồng chính
 
-Giỏ hàng -> `ShippingZoneGateway::getFee` -> `GetFeeRequest::sendData`: tìm `ShippingZone` theo `city`, không có thì lùi về khu vực `city = 'all'`; `wardOption == 1` lấy `feeId`; `wardOption == 0` duyệt `wards` tìm phường xã khớp (không khớp thì dùng `feeId` của khu vực); không có khu vực/`feeId` thì dùng bảng phí `default = 1`. Sau đó chọn mốc trong `range` theo `type` (giá đơn hoặc cân nặng): `min=0,max=0` = áp mọi giá trị, `min=0` hoặc `max=0` là biên mở; mốc đầu tiên khớp thắng (thứ tự mảng quan trọng).  Thiếu `city` vẫn dùng khu vực `all` hoặc bảng phí mặc định; chỉ không có phí khi không có bảng phí nào khớp.
+Giỏ hàng -> `ShippingZoneGateway::getFee` -> `GetFeeRequest::sendData`: **tiền hàng ≥ `freeShipAmount` (> 0) thì phí = 0, không tra bảng**; còn lại tìm `ShippingZone` theo `city`, không có thì lùi về khu vực `city = 'all'`; `wardOption == 1` lấy `feeId`; `wardOption == 0` duyệt `wards` tìm phường xã khớp (không khớp thì dùng `feeId` của khu vực); không có khu vực/`feeId` thì dùng bảng phí `default = 1`. Sau đó chọn mốc trong `range` theo `type` (giá đơn hoặc cân nặng): `min=0,max=0` = áp mọi giá trị, `min=0` hoặc `max=0` là biên mở; mốc đầu tiên khớp thắng (thứ tự mảng quan trọng).  Thiếu `city` vẫn dùng khu vực `all` hoặc bảng phí mặc định; chỉ không có phí khi không có bảng phí nào khớp.
 
 ## Quy tắc và bẫy
 
@@ -58,3 +58,15 @@ Giỏ hàng -> `ShippingZoneGateway::getFee` -> `GetFeeRequest::sendData`: tìm 
 - `ShippingZoneAjax::add/save`: kiểm trùng phường xã cả trong cùng nhóm; `add` kiểm phường thuộc tỉnh (khu vực `all` không được chọn phường riêng, phải chọn "toàn bộ").
 - Đã kiểm, KHÔNG phải lỗi: `ShippingFeeAjax::save` / `ShippingZoneAjax::save` gọi `Model::insert($data)` có `id` là đường UPDATE của khung (`ModelStatic::insert` dòng 161-172 gọi `save()` khi có khoá chính).
 - Bỏ hằng `SHIP_VERSION` (không nơi nào đọc, đã grep plugins/views/packages/app).
+
+## Đã sửa (19/11/2026, instance duocmua — đã đẩy lên server_path 19/11/2026)
+
+- v4.1.0. Ngưỡng miễn phí vận chuyển: ô `zone[freeShipAmount]` trong form cấu hình cổng (`ShippingZoneForm`), lưu `cart_shipping['zone']['freeShipAmount']`
+  (rỗng/0 = tắt). Giá trị đi vào gateway qua `AbstractShippingGateway::initialize()` → `setFreeShipAmount`, rồi `createRequest()` chép sang
+  `GetFeeRequest::setFreeShipAmount`. Chuỗi: `shipping::checkout.freeShip.{label,note}`.
+- `ShippingZoneGateway::getFee` trước đây đọc `$data['weight']` / `$data['total']` — sicommerce không truyền `weight` (nó truyền `shippingWeight`,
+  `subtotal`, `discountAmount`), nên cân luôn lấy `Scart::totalWeight()` (bỏ qua dự phòng 100g/SP) và `total` lệch nghĩa giữa review (chưa trừ
+  giảm giá) và saveCheckout (đã trừ).
+- Mã tỉnh: màn khu vực + trang thanh toán dùng `Location2` (34 tỉnh). Biến `$cities` (`Location::provincesOptions()`, 63 tỉnh cũ) truyền vào
+  view trong `ShippingZoneForm::form()` KHÔNG được view nào dùng — dropdown nạp qua ajax `ShippingAjax::locations`. Seed bằng script thì tra mã ở `Location2`.
+- Khu vực "tất cả tỉnh" lưu `city = 'all'` vào cột integer → thành `0`; `where('city', 'all')` vẫn khớp vì MySQL ép `'all'` → 0. Đừng "sửa" bằng cách so chặt.

@@ -17,8 +17,28 @@ class GetFeeRequest extends AbstractRequest
         ];
     }
 
+    public function getFreeShipAmount(): float
+    {
+        return (float)($this->getParameter('freeShipAmount') ?? 0);
+    }
+
+    public function setFreeShipAmount($value): static
+    {
+        return $this->setParameter('freeShipAmount', is_numeric($value) ? (float)$value : 0);
+    }
+
     public function sendData($data): GetFeeResponse
     {
+        // Đơn đạt ngưỡng miễn phí vận chuyển: không cần tra bảng phí
+        $freeShipAmount = $this->getFreeShipAmount();
+
+        if($freeShipAmount > 0 && (float)$data['total'] >= $freeShipAmount)
+        {
+            return new GetFeeResponse($this, [
+                'fee' => 0,
+            ]);
+        }
+
         $fee = false;
 
         $shipFee = null;
