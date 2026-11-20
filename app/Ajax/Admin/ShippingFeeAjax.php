@@ -12,6 +12,12 @@ class ShippingFeeAjax
 {
     static function load(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $fees = ShippingFee::select('id', 'name', 'type', 'range', 'default')->get();
 
         response()->success(trans('ajax.load.success'), $fees);
@@ -19,6 +25,12 @@ class ShippingFeeAjax
 
     static function add(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $validate = $request->validate([
             'feeName'     => Rule::make(trans('Tên phí vận chuyển'))->notEmpty(),
             'feeType'     => Rule::make(trans('Tiêu chuẩn tính phí vận chuyển'))->notEmpty(),
@@ -94,6 +106,12 @@ class ShippingFeeAjax
 
     static function save(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $id = (int)$request->input('id');
 
         $feeOld = ShippingFee::get($id);
@@ -179,6 +197,12 @@ class ShippingFeeAjax
 
     static function delete(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $id       = (int)$request->input('data');
 
         $zones = ShippingZone::all();

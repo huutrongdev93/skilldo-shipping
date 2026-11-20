@@ -25,7 +25,7 @@ class ShippingFee extends Model {
         {
             if(Str::isSerialized($shippingFee->range))
             {
-                $shippingFee->range = unserialize($shippingFee->range);
+                $shippingFee->range = unserialize($shippingFee->range, ['allowed_classes' => [\stdClass::class]]);
             }
         });
     }

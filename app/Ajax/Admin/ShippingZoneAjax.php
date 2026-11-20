@@ -12,6 +12,12 @@ class ShippingZoneAjax
 {
     static function load(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $zones = ShippingZone::all();
 
         $fees = ShippingFee::select('id', 'name')->get();
@@ -31,6 +37,12 @@ class ShippingZoneAjax
 
     static function add(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $validate = $request->validate([
             'zoneCity' => Rule::make(trans('Tỉnh thành'))->notEmpty(),
             'zoneFee'  => Rule::make(trans('Phí vận chuyển'))->notEmpty(),
@@ -149,6 +161,12 @@ class ShippingZoneAjax
 
     static function save(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $validate = $request->validate([
             'zoneFee'     => Rule::make(trans('Phí vận chuyển'))->notEmpty(),
         ]);
@@ -248,6 +266,12 @@ class ShippingZoneAjax
 
     static function delete(Request $request): void
     {
+        // Ajax::admin() chỉ chặn ở mức loggin_admin: kiểm quyền theo chức năng.
+        if(!\SkillDo\Support\Auth::hasCap('edit_setting'))
+        {
+            response()->error(trans('admin::app.categoryAccessForbidden'));
+        }
+
         $id   = (int)$request->input('data');
 
         $zone = ShippingZone::find($id);

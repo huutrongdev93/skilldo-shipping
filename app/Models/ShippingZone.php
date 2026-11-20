@@ -24,7 +24,7 @@ class ShippingZone extends Model {
         {
             if(Str::isSerialized($shippingZone->wards))
             {
-                $shippingZone->wards = unserialize($shippingZone->wards);
+                $shippingZone->wards = unserialize($shippingZone->wards, ['allowed_classes' => [\stdClass::class]]);
             }
         });
     }
